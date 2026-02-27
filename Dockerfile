@@ -1,9 +1,11 @@
+# Build stage
 FROM docker.io/library/eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /src/eshop
 COPY . .
 RUN chmod +x ./gradlew
 RUN ./gradlew clean bootJar
 
+# Run stage
 FROM docker.io/library/eclipse-temurin:21-jre-alpine AS runner
 
 ARG USER_NAME=eshop
@@ -22,4 +24,3 @@ EXPOSE 8080
 
 ENTRYPOINT ["java"]
 CMD ["-jar", "app.jar"]
-
