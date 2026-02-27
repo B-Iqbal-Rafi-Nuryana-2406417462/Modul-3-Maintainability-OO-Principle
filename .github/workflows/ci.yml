@@ -1,0 +1,74 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  test:
+    name: Build & Test
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out the Git repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java toolchain
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Build and test
+        run: ./gradlew build -x pmdMain -x pmdTest
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: build/reports/tests/test/
+
+      - name: Upload JaCoCo coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: build/reports/jacoco/test/html/
+
+  pmd:
+    name: PMD Static Analysis
+    runs-on: ubuntu-22.04
+    needs: test
+    steps:
+      - name: Check out the Git repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java toolchain
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Run PMD static analysis
+        run: ./gradlew pmdMain
+
+      - name: Upload PMD report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pmd-report
+          path: build/reports/pmd/
